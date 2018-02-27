@@ -4,3 +4,9 @@
 *.xml
 
 *.iml
+
+*.gz
+
+*.log
+
+*.aux
