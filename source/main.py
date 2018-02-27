@@ -26,6 +26,9 @@ def playGames(settings):
     Xwins = 0.0
     Xloses = 0.0
     draws = 0.0
+
+    print("****Testing ", settings.numGamesToTest, " games of agents looking for sequences of length k=", settings.k, " using ", settings.numGamesToEstimateValue, " games to estimate value")
+
     for i in range(settings.numGamesToTest):
         # new game, create a fresh board
         if settings.verbose:
