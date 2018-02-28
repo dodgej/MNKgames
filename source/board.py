@@ -15,6 +15,14 @@ class Board(object):
         else:
             print("*********ERROR! attempt to add to an occupied square")
 
+    # returns whether or not any moves remain
+    def movesRemain(self): #FIXME cache results and update via bookkeeping, dont do N^2 work per call
+        for i in range(self._m):
+            for j in range(self._n):
+                if self._theBoard[i][j] == Square.OPEN:
+                    return True
+        return False
+
     # returns a list containing index pairs for each empty square on the board
     def getOpenSquares(self): #FIXME cache results and update via bookkeeping, dont do N^2 work per call
         result = []

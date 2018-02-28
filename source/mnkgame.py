@@ -16,7 +16,7 @@ class MNKGame(object):
         # Make moves until someone wins
         while (True):
             # test to see if any moves exist
-            if [] == board.getOpenSquares():
+            if not board.movesRemain():
                 return None
 
             # Make move for the first to act
@@ -29,7 +29,7 @@ class MNKGame(object):
                 return firstToMove
 
             # whether or not the last move won, the board could now be drawn, test for that.
-            if [] == board.getOpenSquares():
+            if not board.movesRemain():
                 return None
 
             # moves remain, second to act makes a move!
