@@ -77,13 +77,16 @@ class SearchAgent(Agent):
             estimatedLosses.append(losses)
             estimatedDraws.append(draws)
 
-        if settings.verbose:
-            print("*** Simulation complete, results: (square, wins, losses, draws)")
-            for square, wins, losses, draws in zip(openSquares, estimatedWins, estimatedLosses, estimatedDraws):
-                 print(square, wins, losses, draws)
+        # compute a scoring function for each move based on wins/losses/draws
+        moveScores = [W * 2 - L + D for W,L,D in zip(estimatedWins, estimatedLosses, estimatedDraws)]
 
-        # return the move that had highest win rate
-        return openSquares[np.argmax(estimatedWins)] #FIXME possibly break ties by prob to lose?
+        if settings.verbose:
+            print("*** Simulation complete, results: (square, wins, losses, draws, SCORE)")
+            for square, wins, losses, draws, score in zip(openSquares, estimatedWins, estimatedLosses, estimatedDraws, moveScores):
+                 print(square, wins, losses, draws, score)
+
+        # select the move with the best score
+        return openSquares[np.argmax(moveScores)]
 
 
 # this will be the one(many?) we want to do well (by combining search and deep learning)

@@ -1,8 +1,3 @@
-#FIXME I think some of these imports are circular, but whatever, can deal with it later
-from board import Board
-from agent import RandomAgent, SearchAgent, HybridAgent
-from square import Square
-
 # This class is essentially in charge of the top level control flow for making a game happen
 class MNKGame(object):
 
