@@ -1,7 +1,9 @@
 from board import Board
 from square import Square
 from mnkgame import MNKGame
-from agent import RandomAgent, SearchAgent
+from agent import RandomAgent
+from searchAgents import SearchAgent
+from nnAgents import cnnAgent
 
 # This class stores settings for ALL the constituent parts for the pipeline
 class Settings(object):

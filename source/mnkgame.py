@@ -1,6 +1,5 @@
 # This class is essentially in charge of the top level control flow for making a game happen
 class MNKGame(object):
-
     def playGame(self, board, firstToMove, secondToMove, settings):
         # check to see if this board is already won
         if board.hasPlayerWon(settings.k, firstToMove.type):
