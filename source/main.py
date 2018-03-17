@@ -1,7 +1,7 @@
 from board import Board
 from square import Square
 from mnkgame import MNKGame
-from agent import RandomAgent
+from agent import RandomAgent, RandomIllegalAgent
 from searchAgents import SearchAgent
 from nnAgents import cnnAgent
 
@@ -14,12 +14,12 @@ class Settings(object):
         self.k = 5
 
         # Agent parameters.  Specify different agent types here via constructor
-        self.Xagent = SearchAgent(Square.X_HAS, self.k)
+        self.Xagent = RandomAgent(Square.X_HAS, self.k)
         self.Oagent = SearchAgent(Square.O_HAS, self.k)
-        self.numGamesToEstimateValue = 100
+        self.numGamesToEstimateValue = 5
 
         # Outermost loop parameters
-        self.numGamesToTest = 10
+        self.numGamesToTest = 1
         self.verbose = True
 
 
@@ -48,11 +48,11 @@ def playGames(settings):
             Xwins += 1
             if settings.verbose:
                 print("X emerges victorious over the vile O!!!!! in game ", i)
-        if winner == settings.Oagent:
+        elif winner == settings.Oagent:
             Xloses += 1
             if settings.verbose:
                 print("O has defeated the disgusting X!!!!! in game ", i)
-        if winner == None:
+        elif winner == None:
             draws += 1
             if settings.verbose:
                 print("fought to a draw... maybe next time. In game ", i)
@@ -60,7 +60,6 @@ def playGames(settings):
     # All games complete, generate some final output
     if settings.verbose:
         print("Xwins=", Xwins, "Xloses=", Xloses, "draws=", draws, )
-
 
 if __name__ == '__main__':
     settings = Settings()

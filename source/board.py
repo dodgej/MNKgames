@@ -8,12 +8,20 @@ class Board(object):
         # this is now to be indexed [m][n]. Python doesnt really do 2d arrays, but nested lists are close enough.
         self._theBoard = [[Square(Square.OPEN) for j in range(n)] for i in range(m)]
 
+    def convertActionVecToIdxPair(self, actionLongVec):
+        yIdx = int(actionLongVec / self._n)
+        xIdx = actionLongVec % self._n
+        return xIdx, yIdx
+
     # This function attempts to add a piece to the board. If the square is occupied, it complains.
+    # returns whether the move was legal
     def addPiece(self, mIndex, nIndex, type):
         if self._theBoard[mIndex][nIndex] == Square.OPEN:
             self._theBoard[mIndex][nIndex] = type
+            return True
         else:
             print("*********ERROR! attempt to add to an occupied square")
+            return False
 
     # returns whether or not any moves remain
     def movesRemain(self): #FIXME cache results and update via bookkeeping, dont do N^2 work per call
@@ -24,7 +32,7 @@ class Board(object):
         return False
 
     # returns a list containing index pairs for each empty square on the board
-    def getOpenSquares(self): #FIXME cache results and update via bookkeeping, dont do N^2 work per call
+    def getOpenSquares(self):
         result = []
         for i in range(self._m):
             for j in range(self._n):
