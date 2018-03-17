@@ -14,8 +14,8 @@ class Settings(object):
         self.k = 5
 
         # Agent parameters.  Specify different agent types here via constructor
-        self.Xagent = RandomAgent(Square.X_HAS, self.k)
-        self.Oagent = SearchAgent(Square.O_HAS, self.k)
+        self.Xagent = RandomAgent(Square.X_HAS, self.m, self.n, self.k)
+        self.Oagent = cnnAgent(Square.O_HAS, self.m, self.n, self.k)
         self.numGamesToEstimateValue = 5
 
         # Outermost loop parameters
@@ -57,10 +57,12 @@ def playGames(settings):
             if settings.verbose:
                 print("fought to a draw... maybe next time. In game ", i)
 
+        winner.train()
+
     # All games complete, generate some final output
     if settings.verbose:
         print("Xwins=", Xwins, "Xloses=", Xloses, "draws=", draws, )
 
 if __name__ == '__main__':
     settings = Settings()
-    playGames(settings)
+    playGames(settings) # feel free to define your own "main" by calling newFunction() and commenting this out

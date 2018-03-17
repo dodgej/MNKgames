@@ -9,9 +9,12 @@ class Agent(object):
 
     # agents ALL need to know whether they are playing X or O,
     # as well as the sequence length they seek to create
-    def __init__(self, squareType, k):
+    def __init__(self, squareType, m, n, k):
         self.type = squareType
+        self.m = m
+        self.n = n
         self.k = k
+
 
     def observeReward(self, history, result, settings):
         if settings.verbose:
@@ -26,6 +29,8 @@ class Agent(object):
             for i in range(0, len(history)-1):
                 print(history[i])
 
+    def train(self):
+        pass
 
     # This specifies that all Agents must specify a move function to override this one
     @abc.abstractmethod

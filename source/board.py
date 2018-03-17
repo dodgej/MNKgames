@@ -1,4 +1,5 @@
 from square import Square
+import torch
 
 # This class stores the board and which pieces are on it
 class Board(object):
@@ -80,6 +81,25 @@ class Board(object):
 
         # if we got here, no one has won yet
         return False
+
+    def exportToNN(self):
+        channels = 3
+        batchSize = 1
+        boardTensor = torch.zeros(batchSize, channels, self._m, self._n)
+
+        # doctor up the tensor with current board state
+        for i in range(self._m):
+            for j in range(self._n):
+                if self._theBoard[i][j] == Square.OPEN:
+                    boardTensor[0][0][i][j] = 1
+                elif self._theBoard[i][j] == Square.O_HAS:
+                    boardTensor[0][1][i][j] = 1
+                elif self._theBoard[i][j] == Square.X_HAS:
+                    boardTensor[0][2][i][j] = 1
+                else:
+                    print("Panic: dont know what this square type means")
+
+        return boardTensor
 
     # This function handles printing boards
     def __repr__(self):
