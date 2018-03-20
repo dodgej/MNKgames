@@ -94,6 +94,10 @@ class cnnAgent(Agent, torch.nn.Module):
         self.rewards = []
 
     def move(self, board, settings):
+        for k, v in self.state_dict().items():
+            print("Layer {}".format(k))
+            print(v)
+
         nnValue, nnOutput = self.forward(Variable(board.exportToNN()))
         #print("Move output", nnOutput)
         probs = F.softmax(nnOutput)
