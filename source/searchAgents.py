@@ -55,10 +55,12 @@ class SearchAgent(Agent):
         # compute a scoring function for each move based on wins/losses/draws
         moveScores = [W * 2 - L + D for W,L,D in zip(estimatedWins, estimatedLosses, estimatedDraws)]
 
+        '''
         if settings.verbose:
             print("*** Simulation complete, results: (square, wins, losses, draws, SCORE)")
             for square, wins, losses, draws, score in zip(openSquares, estimatedWins, estimatedLosses, estimatedDraws, moveScores):
                  print(square, wins, losses, draws, score)
+        '''
 
         # select the move with the best score
         return openSquares[np.argmax(moveScores)]

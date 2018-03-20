@@ -71,7 +71,7 @@ def trainAndTestCNNAgent(settings):
     gauntlet2 = SearchAgent(Square.O_HAS, settings.m, settings.n, settings.k) # FIXME but add more search (settings specifying that parameter globally is bad)
     theGauntlet = [gauntlet1, gauntlet2]
 
-    trainingSessions = 100
+    trainingSessions = 5
     print("****Testing ", settings.numGamesToTest, " games of agents looking for sequences of length k=", settings.k,
           " using ", settings.numGamesToEstimateValue, " games to estimate value")
 

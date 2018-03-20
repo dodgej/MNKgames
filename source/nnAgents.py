@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from random import randint
 import torch.nn as nn
 from torch.autograd import Variable
@@ -40,15 +41,15 @@ class cnnAgent(Agent, torch.nn.Module):
         self.actor = nn.Linear(boardSize, boardSize)
 
     def forward(self, x):
-        print('Input tensor size: ', x.size())
+        #print('Input tensor size: ', x.size())
         x = F.relu(self.conv1(x))
-        print('after C1 tensor size: ', x.size())
+        #print('after C1 tensor size: ', x.size())
         x = F.relu(self.conv2(x))
-        print('after C2 tensor size: ', x.size())
+        #print('after C2 tensor size: ', x.size())
         x = x.view(-1, self.conv2_outputs * self.m * self.n)
-        print('after view: ', x.size())
+        #print('after view: ', x.size())
         x = F.relu(self.fc1(x))
-        print('after linear: ', x.size())
+        #print('after linear: ', x.size())
 
         return self.critic(x), self.actor(x)
 
@@ -67,43 +68,41 @@ class cnnAgent(Agent, torch.nn.Module):
 
     def train(self):
         optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
-        print("BOARDY BOARD BOARDz")
-        print(self.histories)
-        moves, boards = zip(*self.histories)
+        #print("HISTORIES", self.histories)
+        listOfExportedBoardHistories = []
 
-        varBoards = []
-        for board in boards:
-            varBoards.append(board.exportToNN())
-
-
-
-        #FIXME may want to do this operation elsewhere
+        # FIXME may want to do this operation elsewhere
         optimizer.zero_grad()
+        rewardIndex = -1
 
-        #FIXME may want to slice off the last move of the action history if it was illegal
-        #  (dont want to punish the legal and potentially GOOD moves made prior to cheating)
+        for hist in self.histories:
+            rewardIndex += 1
+            moves, boards = zip(*hist)
 
-        outputs = self(Variable(varBoards))
-        loss = nn.CrossEntropyLoss()(outputs, -self.rewards)
+            # FIXME may want to slice off the last move of the action history if it was illegal
+            #  (dont want to punish the legal and potentially GOOD moves made prior to cheating)
 
-        loss.backward()
-        optimizer.step()
+            for board in boards:
+                nnValue, nnOutput = self(Variable(board.exportToNN()))
+                #print("nnoutput", nnOutput)
+                loss = nn.CrossEntropyLoss()(nnOutput, Variable(torch.LongTensor(-self.rewards[rewardIndex])))
+
+            loss.backward()
+            optimizer.step()
 
         self.histories = []
         self.rewards = []
 
-
-
     def move(self, board, settings):
-        nnValue, nnMove = self.forward(Variable(board.exportToNN()))
-        print("Move output", nnMove)
-        probs = F.softmax(nnMove)
+        nnValue, nnOutput = self.forward(Variable(board.exportToNN()))
+        #print("Move output", nnOutput)
+        probs = F.softmax(nnOutput)
 
-        print("probabilities", probs)
+        #print("probabilities", probs)
         action = probs.max(1)[1].data
-        print("action", action)
+        #print("action", action)
         moveX, moveY = board.convertActionVecToIdxPair(action[0])
-        print("move", moveX, " ", moveY)
+        #print("move", moveX, " ", moveY)
 
         return moveX, moveY
 
