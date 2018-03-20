@@ -10,8 +10,8 @@ class Board(object):
         self._theBoard = [[Square(Square.OPEN) for j in range(n)] for i in range(m)]
 
     def convertActionVecToIdxPair(self, actionLongVec):
-        yIdx = int(actionLongVec / self._n)
-        xIdx = actionLongVec % self._n
+        yIdx = int(actionLongVec / self._m)
+        xIdx = actionLongVec % self._m
         return xIdx, yIdx
 
     # This function attempts to add a piece to the board. If the square is occupied, it complains.

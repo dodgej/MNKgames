@@ -17,11 +17,11 @@ class SearchAgent(Agent):
         estimatedDraws = []
 
         # Create the random agents that will play to estimate board state values
-        myAgent = RandomAgent(self.type, self.k)
+        myAgent = RandomAgent(self.type, self.m, self.n, self.k)
         oppType = Square.O_HAS
         if oppType == self.type:
             oppType = Square.X_HAS
-        oppAgent = RandomAgent(oppType, self.k)
+        oppAgent = RandomAgent(oppType, self.m, self.n, self.k)
 
         # Copy the settings and make sure the new one is not set to verbose (too much output)
         newSettings = deepcopy(settings)

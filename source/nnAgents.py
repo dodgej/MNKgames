@@ -17,7 +17,7 @@ class cnnAgent(Agent, torch.nn.Module):
     rewardGameWin = 2
     rewardGameDraw = 1
     penaltyLoss = -1
-    penaltyIllegalMove = -10000
+    penaltyIllegalMove = -1 #FIXME might want this a lot higher if we can be trickier in backprop
 
     def __init__(self, squareType, m, n, k):
         Agent.__init__(self, squareType, m, n, k)
@@ -28,30 +28,27 @@ class cnnAgent(Agent, torch.nn.Module):
 
         # network parameters
         input_channels = 3
-        kernelSize = 3
-        conv1_outputs = 6
+        self.kernelSize = 3
+        self.conv1_outputs = 11
+        self.conv2_outputs = 13
         boardSize = self.m * self.n
-        self.conv1 = nn.Conv2d(input_channels, conv1_outputs, kernelSize)
-        self.conv2 = nn.Conv2d(conv1_outputs, 16, kernelSize)
-        self.fc1 = nn.Linear(16 * 6 * 6, boardSize)
+        self.conv1 = nn.Conv2d(input_channels, self.conv1_outputs, self.kernelSize, padding=int(self.kernelSize/2))
+        self.conv2 = nn.Conv2d(self.conv1_outputs, self.conv2_outputs, self.kernelSize, padding=int(self.kernelSize/2))
+        self.fc1 = nn.Linear(self.conv2_outputs * self.m * self.n, boardSize)
 
         self.critic = nn.Linear(boardSize, 1)
         self.actor = nn.Linear(boardSize, boardSize)
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
-        print('Input tensor size: ')
-        print(x.size())
-        pad = nn.ZeroPad2d((10-self.n, 0, 10-self.m, 0))
-        x = pad(x)
+        print('Input tensor size: ', x.size())
         x = F.relu(self.conv1(x))
-        print(x.size())
+        print('after C1 tensor size: ', x.size())
         x = F.relu(self.conv2(x))
-        print(x.size())
-        x = x.view(-1, 16 * 6 * 6)
-        print(x.size())
+        print('after C2 tensor size: ', x.size())
+        x = x.view(-1, self.conv2_outputs * self.m * self.n)
+        print('after view: ', x.size())
         x = F.relu(self.fc1(x))
-        print(x.size())
+        print('after linear: ', x.size())
 
         return self.critic(x), self.actor(x)
 
@@ -70,12 +67,23 @@ class cnnAgent(Agent, torch.nn.Module):
 
     def train(self):
         optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
+        print("BOARDY BOARD BOARDz")
+        print(self.histories)
         moves, boards = zip(*self.histories)
+
+        varBoards = []
+        for board in boards:
+            varBoards.append(board.exportToNN())
+
+
 
         #FIXME may want to do this operation elsewhere
         optimizer.zero_grad()
 
-        outputs = self(boards)
+        #FIXME may want to slice off the last move of the action history if it was illegal
+        #  (dont want to punish the legal and potentially GOOD moves made prior to cheating)
+
+        outputs = self(Variable(varBoards))
         loss = nn.CrossEntropyLoss()(outputs, -self.rewards)
 
         loss.backward()
@@ -88,16 +96,16 @@ class cnnAgent(Agent, torch.nn.Module):
 
     def move(self, board, settings):
         nnValue, nnMove = self.forward(Variable(board.exportToNN()))
-        print(nnMove)
-        probs = F.softmax(nnMove, dim=0)
+        print("Move output", nnMove)
+        probs = F.softmax(nnMove)
 
-        print(probs)
+        print("probabilities", probs)
         action = probs.max(1)[1].data
-        print(action)
-        #board.convertActionVecToIdxPair()
+        print("action", action)
+        moveX, moveY = board.convertActionVecToIdxPair(action[0])
+        print("move", moveX, " ", moveY)
 
-        #FIXME rather than computing an index pair, just make a fixed move until things work better.
-        return 0,0
+        return moveX, moveY
 
 #cnn with filter size = k
 #FIXME weird error. self.k is not callable
