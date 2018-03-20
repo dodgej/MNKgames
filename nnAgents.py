@@ -122,11 +122,7 @@ class cnnAgent2(Agent, torch.nn.Module):
         boardSize = self.m * self.n
         self.conv1 = nn.Conv2d(input_channels, conv1_outputs, self.k)
         self.conv2 = nn.Conv2d(conv1_outputs, 16, self.k)
-<<<<<<< HEAD
         self.fc1 = nn.Linear(16 * (10-2*((self.k)-1)) * (10-2*((self.k)-1)), boardSize)
-=======
-        self.fc1 = nn.Linear(16 * (10-2((self.k)-1)) * (10-2((self.k)-1)), boardSize)
->>>>>>> amritas02-patch-1
 
         self.critic = nn.Linear(boardSize, 1)
         self.actor = nn.Linear(boardSize, boardSize)
@@ -141,7 +137,6 @@ class cnnAgent2(Agent, torch.nn.Module):
         print(x.size())
         x = F.relu(self.conv2(x))
         print(x.size())
-<<<<<<< HEAD
         x = x.view(-1, 16 * (10-2*(self.k-1)) * (10-2*(self.k-1)))
         print(x.size())
         x = F.relu(self.fc1(x))
@@ -228,16 +223,11 @@ class cnnAgent3(Agent, torch.nn.Module):
         print(x.size())
         #pad = nn.ZeroPad2d((10-self.n, 0, 10-self.m, 0))
         #x = pad(x)
-        t_m = self.m -4
-        t_n = self.n -4
         x = F.relu(self.conv1(x))
         print(x.size())
         x = F.relu(self.conv2(x))
         print(x.size())
-        x = x.view(-1, 16 * t_m * t_n)
-=======
-        x = x.view(-1, 16 * (10-2(self.k-1)) * (10-2(self.k-1)))
->>>>>>> amritas02-patch-1
+        x = x.view(-1, 16 * (10-2*(self.k-1)) * (10-2*(self.k-1)))
         print(x.size())
         x = F.relu(self.fc1(x))
         print(x.size())
