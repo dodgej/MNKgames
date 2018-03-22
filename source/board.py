@@ -14,6 +14,9 @@ class Board(object):
         xIdx = actionLongVec % self._m
         return xIdx, yIdx
 
+    def moveIsLegal(self, mIndex, nIndex):
+        return self._theBoard[mIndex][nIndex] == Square.OPEN
+
     # This function attempts to add a piece to the board. If the square is occupied, it complains.
     # returns whether the move was legal
     def addPiece(self, mIndex, nIndex, type):

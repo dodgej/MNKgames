@@ -18,14 +18,12 @@ class cnnAgent(Agent, torch.nn.Module):
     rewardGameWin = 2
     rewardGameDraw = 1
     penaltyLoss = -1
-    penaltyIllegalMove = -1 #FIXME might want this a lot higher if we can be trickier in backprop
+    penaltyIllegalMove = -10000
 
     def __init__(self, squareType, m, n, k):
+        print("Initializing network...")
         Agent.__init__(self, squareType, m, n, k)
         torch.nn.Module.__init__(self)
-        # need these in constructor, will be appended onto during experience to do the backprop
-        self.histories = []
-        self.rewards = []
 
         # network parameters
         input_channels = 3
@@ -40,251 +38,89 @@ class cnnAgent(Agent, torch.nn.Module):
         self.critic = nn.Linear(boardSize, 1)
         self.actor = nn.Linear(boardSize, boardSize)
 
+        print("Initialed network")
+
     def forward(self, x):
-        #print('Input tensor size: ', x.size())
         x = F.relu(self.conv1(x))
-        #print('after C1 tensor size: ', x.size())
         x = F.relu(self.conv2(x))
-        #print('after C2 tensor size: ', x.size())
         x = x.view(-1, self.conv2_outputs * self.m * self.n)
-        #print('after view: ', x.size())
         x = F.relu(self.fc1(x))
-        #print('after linear: ', x.size())
 
         return self.critic(x), self.actor(x)
 
     def observeReward(self, history, result, settings):
+        print("Observing reward...")
         Agent.observeReward(self, history, result, settings)
-        self.histories.append(history)
 
+        reward = 0
         if result == GameResult.GAME_WIN:
-            self.rewards.append(self.rewardGameWin)
+            reward = self.rewardGameWin
         if result == GameResult.GAME_DRAW:
-            self.rewards.append(self.rewardGameDraw)
+            reward = self.rewardGameDraw
         if result == GameResult.GAME_LOSE:
-            self.rewards.append(self.penaltyLoss)
-        if result == GameResult.GAME_DISQUALIFIED:
-            self.rewards.append(self.penaltyIllegalMove)
+            reward = self.penaltyLoss
+        if result == GameResult.ILLEGAL_MOVE:
+            reward = self.penaltyIllegalMove
 
-    def train(self):
-        optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
-        #print("HISTORIES", self.histories)
-        listOfExportedBoardHistories = []
+        print("making optimizer... ")
+        optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.8)
 
-        # FIXME may want to do this operation elsewhere
-        optimizer.zero_grad()
-        rewardIndex = -1
+        _, boards = zip(*history)
 
-        for hist in self.histories:
-            rewardIndex += 1
-            moves, boards = zip(*hist)
+        for board in boards:
+            # FIXME may want to do this operation elsewhere
+            optimizer.zero_grad()
 
-            # FIXME may want to slice off the last move of the action history if it was illegal
-            #  (dont want to punish the legal and potentially GOOD moves made prior to cheating)
-
-            for board in boards:
-                nnValue, nnOutput = self(Variable(board.exportToNN()))
-                #print("nnoutput", nnOutput)
-                loss = nn.CrossEntropyLoss()(nnOutput, Variable(torch.LongTensor(-self.rewards[rewardIndex])))
+            nnValue, nnOutput = self(Variable(board.exportToNN()))
+            #print("nnoutput", nnOutput)
+            #FIXME the making of the loss object is currently the main thing I am not sure on. This should not be seg faulting...
+            print("generating loss  (occasionally seg faults here)")
+            loss = nn.CrossEntropyLoss(reduce=False)(nnOutput, Variable(torch.LongTensor(-reward)))
+            print("loss generated")
 
             loss.backward()
+            print("BACKWARD pass complete")
             optimizer.step()
+            print("Optimizer step taken")
 
-        self.histories = []
-        self.rewards = []
+        print("reward Observed")
 
     def move(self, board, settings):
+        print("moving...")
+        '''
         for k, v in self.state_dict().items():
             print("Layer {}".format(k))
             print(v)
+        '''
+        #first verify that a move exists
+        if not board.movesRemain():
+            print("requested move on full board!")
+            return None, None
 
         nnValue, nnOutput = self.forward(Variable(board.exportToNN()))
-        #print("Move output", nnOutput)
-        probs = F.softmax(nnOutput)
+        actionProbs = F.softmax(nnOutput)
 
-        #print("probabilities", probs)
-        action = probs.max(1)[1].data
-        #print("action", action)
-        moveX, moveY = board.convertActionVecToIdxPair(action[0])
+        mostProbableAction = actionProbs.max(1)
+        # apparently the variable above is a pair, so second element is the argmax
+        mostProbableActionIdx = mostProbableAction[1]
+        # this is in a variable, so reach in for the tensor and access an item to get an int
+        actionChoice = mostProbableActionIdx.data[0]
+
+        # determine the board index that action corresponds to
+        moveX, moveY = board.convertActionVecToIdxPair(actionChoice)
         #print("move", moveX, " ", moveY)
 
+        if not board.moveIsLegal(moveX, moveY):
+            print("illegal move selected, trying again")
+
+            #FIXME option 1, send a STRONG error signal through the network
+            fakeHistory = [((moveX, moveY), board)]
+            self.observeReward(fakeHistory, GameResult.ILLEGAL_MOVE, settings)
+            #FIXME careful here, dont want infinite recursion
+            return self.move(board, settings)
+
+
+            #FIXME option 2: select the next most probable from the actions?
+
+        print("moved")
         return moveX, moveY
-
-#cnn with filter size = k
-#FIXME weird error. self.k is not callable
-class cnnAgent2(Agent, torch.nn.Module):
-    # network reward function parameters
-    rewardGameWin = 2
-    rewardGameDraw = 1
-    penaltyLoss = -1
-    penaltyIllegalMove = -10000
-
-    def __init__(self, squareType, m, n, k):
-        Agent.__init__(self, squareType, m, n, k)
-        torch.nn.Module.__init__(self)
-        # need these in constructor, will be appended onto during experience to do the backprop
-        self.histories = []
-        self.rewards = []
-
-        # network parameters
-        input_channels = 3
-        kernelSize = 3
-        conv1_outputs = 6
-        boardSize = self.m * self.n
-        self.conv1 = nn.Conv2d(input_channels, conv1_outputs, self.k)
-        self.conv2 = nn.Conv2d(conv1_outputs, 16, self.k)
-        self.fc1 = nn.Linear(16 * (10-2*((self.k)-1)) * (10-2*((self.k)-1)), boardSize)
-
-        self.critic = nn.Linear(boardSize, 1)
-        self.actor = nn.Linear(boardSize, boardSize)
-
-    def forward(self, x):
-        # Max pooling over a (2, 2) window
-        print('Input tensor size: ')
-        print(x.size())
-        pad = nn.ZeroPad2d((10-self.n, 0, 10-self.m, 0))
-        x = pad(x)
-        x = F.relu(self.conv1(x))
-        print(x.size())
-        x = F.relu(self.conv2(x))
-        print(x.size())
-        x = x.view(-1, 16 * (10-2*(self.k-1)) * (10-2*(self.k-1)))
-        print(x.size())
-        x = F.relu(self.fc1(x))
-        print(x.size())
-
-        return self.critic(x), self.actor(x)
-
-    def observeReward(self, history, result, settings):
-        Agent.observeReward(self, history, result, settings)
-        self.histories.append(history)
-
-        if result == GameResult.GAME_WIN:
-            self.rewards.append(self.rewardGameWin)
-        if result == GameResult.GAME_DRAW:
-            self.rewards.append(self.rewardGameDraw)
-        if result == GameResult.GAME_LOSE:
-            self.rewards.append(self.penaltyLoss)
-        if result == GameResult.GAME_DISQUALIFIED:
-            self.rewards.append(self.penaltyIllegalMove)
-
-    def train(self):
-        optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
-        moves, boards = zip(*self.histories)
-
-        #FIXME may want to do this operation elsewhere
-        optimizer.zero_grad()
-
-        outputs = self(boards)
-        loss = nn.CrossEntropyLoss()(outputs, -self.rewards)
-
-        loss.backward()
-        optimizer.step()
-
-        self.histories = []
-        self.rewards = []
-
-
-
-    def move(self, board, settings):
-        nnValue, nnMove = self.forward(Variable(board.exportToNN()))
-        print(nnMove)
-        probs = F.softmax(nnMove, dim=0)
-
-        print(probs)
-        action = probs.max(1)[1].data
-        print(action)
-        #board.convertActionVecToIdxPair()
-
-        #FIXME rather than computing an index pair, just make a fixed move until things work better.
-        return 0,0
-
-#cnn with m and n. no padding
-class cnnAgent3(Agent, torch.nn.Module):
-    # network reward function parameters
-    rewardGameWin = 2
-    rewardGameDraw = 1
-    penaltyLoss = -1
-    penaltyIllegalMove = -10000
-
-    def __init__(self, squareType, m, n, k):
-        Agent.__init__(self, squareType, m, n, k)
-        torch.nn.Module.__init__(self)
-        # need these in constructor, will be appended onto during experience to do the backprop
-        self.histories = []
-        self.rewards = []
-
-        # network parameters
-        input_channels = 3
-        kernelSize = 3
-        conv1_outputs = 6
-        boardSize = self.m * self.n
-        t_m = self.m -4
-        t_n = self.n -4
-        self.conv1 = nn.Conv2d(input_channels, conv1_outputs, kernelSize)
-        self.conv2 = nn.Conv2d(conv1_outputs, 16, kernelSize)
-        self.fc1 = nn.Linear(16 * t_m * t_n, boardSize)
-
-        self.critic = nn.Linear(boardSize, 1)
-        self.actor = nn.Linear(boardSize, boardSize)
-
-    def forward(self, x):
-        # Max pooling over a (2, 2) window
-        print('Input tensor size: ')
-        print(x.size())
-        #pad = nn.ZeroPad2d((10-self.n, 0, 10-self.m, 0))
-        #x = pad(x)
-        x = F.relu(self.conv1(x))
-        print(x.size())
-        x = F.relu(self.conv2(x))
-        print(x.size())
-        x = x.view(-1, 16 * (10-2*(self.k-1)) * (10-2*(self.k-1)))
-        print(x.size())
-        x = F.relu(self.fc1(x))
-        print(x.size())
-
-        return self.critic(x), self.actor(x)
-
-    def observeReward(self, history, result, settings):
-        Agent.observeReward(self, history, result, settings)
-        self.histories.append(history)
-
-        if result == GameResult.GAME_WIN:
-            self.rewards.append(self.rewardGameWin)
-        if result == GameResult.GAME_DRAW:
-            self.rewards.append(self.rewardGameDraw)
-        if result == GameResult.GAME_LOSE:
-            self.rewards.append(self.penaltyLoss)
-        if result == GameResult.GAME_DISQUALIFIED:
-            self.rewards.append(self.penaltyIllegalMove)
-
-    def train(self):
-        optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.9)
-        moves, boards = zip(*self.histories)
-
-        #FIXME may want to do this operation elsewhere
-        optimizer.zero_grad()
-
-        outputs = self(boards)
-        loss = nn.CrossEntropyLoss()(outputs, -self.rewards)
-
-        loss.backward()
-        optimizer.step()
-
-        self.histories = []
-        self.rewards = []
-
-
-
-    def move(self, board, settings):
-        nnValue, nnMove = self.forward(Variable(board.exportToNN()))
-        print(nnMove)
-        probs = F.softmax(nnMove, dim=0)
-
-        print(probs)
-        action = probs.max(1)[1].data
-        print(action)
-        #board.convertActionVecToIdxPair()
-
-        #FIXME rather than computing an index pair, just make a fixed move until things work better.
-        return 0,0

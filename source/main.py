@@ -1,7 +1,7 @@
 from board import Board
 from square import Square
 from mnkgame import MNKGame
-from agent import RandomAgent, RandomIllegalAgent
+from agent import RandomAgent
 from searchAgents import SearchAgent
 from nnAgents import cnnAgent
 
@@ -19,7 +19,7 @@ class Settings(object):
         self.numGamesToEstimateValue = 5
 
         # Outermost loop parameters
-        self.numGamesToTest = 1
+        self.numGamesToTest = 10
         self.verbose = True
 
 
@@ -57,8 +57,6 @@ def playGames(settings):
             if settings.verbose:
                 print("fought to a draw... maybe next time. In game ", i)
 
-        winner.train()
-
     # All games complete, generate some final output
     if settings.verbose:
         print("Xwins=", Xwins, "Xloses=", Xloses, "draws=", draws, )
@@ -71,7 +69,7 @@ def trainAndTestCNNAgent(settings):
     gauntlet2 = SearchAgent(Square.O_HAS, settings.m, settings.n, settings.k) # FIXME but add more search (settings specifying that parameter globally is bad)
     theGauntlet = [gauntlet1, gauntlet2]
 
-    trainingSessions = 5
+    trainingSessions = 100
     print("****Testing ", settings.numGamesToTest, " games of agents looking for sequences of length k=", settings.k,
           " using ", settings.numGamesToEstimateValue, " games to estimate value")
 
@@ -84,12 +82,9 @@ def trainAndTestCNNAgent(settings):
 
             # play the game, taking turns being first to act
             if i % 2 == 0:
-                winner = MNKGame().playGame(board, ourHero, trainingPartner, settings)
+                MNKGame().playGame(board, ourHero, trainingPartner, settings)
             else:
-                winner = MNKGame().playGame(board, trainingPartner, ourHero, settings)
-
-        ourHero.train()
-        trainingPartner.train()
+                MNKGame().playGame(board, trainingPartner, ourHero, settings)
 
         # test vs the gauntlet
         for opponent in theGauntlet:
@@ -106,7 +101,7 @@ def trainAndTestCNNAgent(settings):
                 if i % 2 == 0:
                     winner = MNKGame().playGame(board, ourHero, opponent, settings)
                 else:
-                    winner = MNKGame().playGame(board, trainingPartner, opponent, settings)
+                    winner = MNKGame().playGame(board, opponent, ourHero, settings)
 
                 # do the bookkeeping now that a result is obtained
                 if winner == ourHero:
