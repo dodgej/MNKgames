@@ -9,8 +9,8 @@ from nnAgents import cnnAgent
 class Settings(object):
     def __init__(self):
         # Board parameters
-        self.m = 6
-        self.n = 7
+        self.m = 7
+        self.n = 6
         self.k = 5
 
         # Agent parameters.  Specify different agent types here via constructor
@@ -20,7 +20,8 @@ class Settings(object):
 
         # Outermost loop parameters
         self.numGamesToTest = 10
-        self.verbose = True
+        self.numGamesToTrain = 10
+        self.verbose = False
 
 
 # this function plays a number of games stored in the settings and reports results
@@ -76,8 +77,11 @@ def trainAndTestCNNAgent(settings):
           " using ", settings.numGamesToEstimateValue, " games to estimate value")
     print("Agents: X: ", ourHero)
     print(" and O: ", trainingPartner)
-    for i in range(trainingSessions):
-        for j in range(settings.numGamesToTest):
+
+    print("\tTestSession\tHeroWins\tHeroLoses\tHeroDraws\tAvgIllegalMoves\tAverageGameLength\tMaxGameLength\tOpponent\t(REPEAT)")
+
+    for session in range(trainingSessions):
+        for i in range(settings.numGamesToTrain):
             # new game, create a fresh board
             if settings.verbose:
                 print("Creating a M x N board, where m =", settings.m, " and n=", settings.n, "\n")
@@ -91,22 +95,32 @@ def trainAndTestCNNAgent(settings):
 
         # test vs the gauntlet
         for opponent in theGauntlet:
-            heroWins = 0.0
-            heroLoses = 0.0
-            heroDraws = 0.0
-            for i in range(settings.numGamesToTest):
+            heroWins = 0
+            heroLoses = 0
+            heroDraws = 0
+            totalIllegalMoves = 0
+            maxGameLength = 0
+            totalGameLength = 0
+            for j in range(settings.numGamesToTest):
                 # new game, create a fresh board
                 if settings.verbose:
                     print("Creating a M x N board, where m =", settings.m, " and n=", settings.n, "\n")
                 board = Board(settings.m, settings.n)
 
                 # play the game, taking turns being first to act
-                if i % 2 == 0:
-                    winner = MNKGame().playGame(board, ourHero, opponent, settings)
+                if j % 2 == 0:
+                    winner, moveCount, illegalMoveCount = MNKGame().playGame(board, ourHero, opponent, settings)
+
                 else:
-                    winner = MNKGame().playGame(board, opponent, ourHero, settings)
+                    winner, moveCount, illegalMoveCount = MNKGame().playGame(board, opponent, ourHero, settings)
+
 
                 # do the bookkeeping now that a result is obtained
+                totalIllegalMoves += illegalMoveCount
+                totalGameLength += moveCount
+                if moveCount > maxGameLength:
+                    maxGameLength = moveCount
+
                 if winner == ourHero:
                     heroWins += 1
                     if settings.verbose:
@@ -121,9 +135,9 @@ def trainAndTestCNNAgent(settings):
                         print("fought to a draw... maybe next time. In game ", i)
 
             # All games vs this opponent complete, generate some final output
-            if settings.verbose:
-                print("Xwins=", heroWins, "Xloses=", heroLoses, "draws=", heroDraws )
 
+            print("\t", session, "\t", heroWins, "\t", heroLoses, "\t", heroDraws, "\t", float(totalIllegalMoves)/settings.numGamesToTest, "\t", float(totalGameLength)/settings.numGamesToTest, "\t", maxGameLength, "\t", opponent, end='' )
+        print("")
 if __name__ == '__main__':
     settings = Settings()
     #playGames(settings) # feel free to define your own "main" by calling newFunction() and commenting this out

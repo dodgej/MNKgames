@@ -31,7 +31,7 @@ class MNKGame(object):
             gameOver = True
 
         history.append(((moveX, moveY), board))
-        return gameOver, winner, moveX, moveY
+        return gameOver, winner, moveX, moveY, moveWasLegal
 
     def playGame(self, board, firstToMove, secondToMove, settings):
         winner = None
@@ -40,12 +40,20 @@ class MNKGame(object):
         firstHistory = []
         secondHistory = []
 
+        moveCount = 0
+        illegalMoveCount = 0
         # actually play the game
         for _ in range(board._m*board._n):
-            gameOver, winner, moveX, moveY = self.gameStep(board, firstToMove, secondToMove, firstHistory, settings)
+            gameOver, winner, moveX, moveY, moveWasLegal = self.gameStep(board, firstToMove, secondToMove, firstHistory, settings)
+            moveCount += 1
+            if not moveWasLegal:
+                illegalMoveCount += 1
             if gameOver:
                 break
-            gameOver, winner, moveX, moveY = self.gameStep(board, secondToMove, firstToMove, secondHistory, settings)
+            gameOver, winner, moveX, moveY, moveWasLegal = self.gameStep(board, secondToMove, firstToMove, secondHistory, settings)
+            moveCount += 1
+            if not moveWasLegal:
+                illegalMoveCount += 1
             if gameOver:
                 break
 
@@ -63,4 +71,4 @@ class MNKGame(object):
             firstToMove.observeReward(firstHistory, GameResult.GAME_LOSE, settings)
             secondToMove.observeReward(secondHistory, GameResult.GAME_WIN, settings)
 
-        return winner
+        return winner, moveCount, illegalMoveCount

@@ -24,7 +24,6 @@ class Board(object):
             self._theBoard[mIndex][nIndex] = type
             return True
         else:
-            print("*********ERROR! attempt to add to an occupied square")
             return False
 
     # returns whether or not any moves remain

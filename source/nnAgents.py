@@ -17,10 +17,10 @@ from mnkgame import GameResult
 class cnnAgent(Agent, torch.nn.Module):
     # network reward function parameters
     rewardGameWin = 2
-    rewardGameDraw = 1
-    penaltyLoss = -1
-    penaltyIllegalMove = -10
-    MAX_TRIES_TO_MOVE = 10
+    rewardGameDraw = 1.25
+    penaltyLoss = .25
+    penaltyIllegalMove = 0
+    MAX_TRIES_TO_MOVE = 300
 
     def __init__(self, squareType, m, n, k):
         Agent.__init__(self, squareType, m, n, k)
@@ -60,7 +60,7 @@ class cnnAgent(Agent, torch.nn.Module):
             reward = self.penaltyLoss
         if result == GameResult.ILLEGAL_MOVE:
             reward = self.penaltyIllegalMove
-            learningRate = 1
+            learningRate = .1
 
         optimizer = optim.SGD(self.parameters(), lr=learningRate)
 
@@ -68,15 +68,12 @@ class cnnAgent(Agent, torch.nn.Module):
         _, boards = zip(*history)
 
         for board in boards:
+
+            #FIXME this block is shared with move(). should be abstracted for clarity and maintenance.
             # Compute the NN outputs and move
             nnValue, nnOutput = self(Variable(board.exportToNN()))
             #print("nnoutput", nnOutput)
-            actionProbs = F.softmax(nnOutput)
-
-
-
-
-            #FIXME this block is shared with move(). should be abstracted for clarity and maintenance.
+            actionProbs = F.softmax(nnOutput, dim=1)
             mostProbableAction = actionProbs.max(1)
             # apparently the variable above is a pair, so second element is the argmax
             mostProbableActionIdx = mostProbableAction[1]
@@ -88,7 +85,12 @@ class cnnAgent(Agent, torch.nn.Module):
             #print(nnOutput)
 
             targetTensor = deepcopy(nnOutput.data)
-            targetTensor[0][actionChoice] += reward
+            newActionProbMass = targetTensor[0][actionChoice] * reward
+            rewardPerAction = reward / targetTensor.size()[1]
+#            massDiffPerAction = (chosenProbMass - newProbMass)/ (targetTensor.size()[1] - 1)
+
+            targetTensor *= rewardPerAction
+            targetTensor[0][actionChoice] = newActionProbMass
             targetVar = Variable(targetTensor)
 
             loss = nn.SmoothL1Loss()(nnOutput, targetVar)
@@ -109,7 +111,7 @@ class cnnAgent(Agent, torch.nn.Module):
             return None, None
 
         nnValue, nnOutput = self.forward(Variable(board.exportToNN()))
-        actionProbs = F.softmax(nnOutput)
+        actionProbs = F.softmax(nnOutput, dim=1)
 
         mostProbableAction = actionProbs.max(1)
         # apparently the variable above is a pair, so second element is the argmax
@@ -121,15 +123,16 @@ class cnnAgent(Agent, torch.nn.Module):
         moveX, moveY = board.convertActionVecToIdxPair(actionChoice)
         #print("move", moveX, " ", moveY)
 
-        if not board.moveIsLegal(moveX, moveY) and tries < self.MAX_TRIES_TO_MOVE:
-            print("****************illegal move selected (", moveX, ",", moveY, ") or [", actionChoice, "]trying again")
-            print(nnOutput)
-
-
-            #FIXME option 1 (the one we are taking right now), send a STRONG error signal through the network
-            # FIXME option 2: select the next most probable from the actions?
-            fakeHistory = [((moveX, moveY), board)]
-            self.observeReward(fakeHistory, GameResult.ILLEGAL_MOVE, settings)
-            return self.move(board, settings, 1+tries)
+        if not board.moveIsLegal(moveX, moveY):
+            if tries > self.MAX_TRIES_TO_MOVE:
+                if settings.verbose:
+                    print("****************illegal move selected (", moveX, ",", moveY, ") or [", actionChoice, "]trying again")
+                    print(nnOutput)
+            else:
+                #FIXME option 1 (the one we are taking right now), send a STRONG error signal through the network
+                # FIXME option 2: select the next most probable from the actions?
+                fakeHistory = [((moveX, moveY), board)]
+                self.observeReward(fakeHistory, GameResult.ILLEGAL_MOVE, settings)
+                return self.move(board, settings, 1+tries)
 
         return moveX, moveY
