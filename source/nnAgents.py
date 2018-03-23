@@ -16,10 +16,10 @@ from mnkgame import GameResult
 #One purely CNN
 class cnnAgent(Agent, torch.nn.Module):
     # network reward function parameters
-    rewardGameWin = 2
-    rewardGameDraw = 1.25
-    penaltyLoss = .25
-    penaltyIllegalMove = .01
+    rewardGameWin = .5
+    rewardGameDraw = .25
+    penaltyLoss = -.25
+    penaltyIllegalMove = -1
     MAX_TRIES_TO_MOVE = 300
 
     def __init__(self, squareType, m, n, k):
@@ -60,7 +60,6 @@ class cnnAgent(Agent, torch.nn.Module):
             reward = self.penaltyLoss
         if result == GameResult.ILLEGAL_MOVE:
             reward = self.penaltyIllegalMove
-            learningRate = .1
 
         optimizer = optim.SGD(self.parameters(), lr=learningRate)
 
@@ -85,11 +84,11 @@ class cnnAgent(Agent, torch.nn.Module):
             #print(nnOutput)
 
             targetTensor = deepcopy(nnOutput.data)
-            newActionProbMass = targetTensor[0][actionChoice] * reward
-            rewardPerAction = reward / targetTensor.size()[1]
+            newActionProbMass = targetTensor[0][actionChoice] + reward
+            #rewardPerAction = reward / targetTensor.size()[1]
 #            massDiffPerAction = (chosenProbMass - newProbMass)/ (targetTensor.size()[1] - 1)
 
-            targetTensor *= rewardPerAction
+            #targetTensor *= rewardPerAction
             targetTensor[0][actionChoice] = newActionProbMass
             targetVar = Variable(targetTensor)
 

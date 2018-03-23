@@ -78,7 +78,7 @@ def trainAndTestCNNAgent(settings):
     print("Agents: X: ", ourHero)
     print(" and O: ", trainingPartner)
 
-    print("\tTestSession\tHeroWins\tHeroLoses\tHeroDraws\tAvgIllegalMoves\tAverageGameLength\tMaxGameLength\tOpponent\t(REPEAT)")
+    print("\tTestSession\tHeroWins\tHeroLoses\tHeroDraws\tAvgIllegalMoves\tAvgGameLength\tMaxGameLength\tOpponent\t(REPEAT)")
 
     for session in range(trainingSessions):
         for i in range(settings.numGamesToTrain):
