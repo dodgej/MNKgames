@@ -19,7 +19,7 @@ class cnnAgent(Agent, torch.nn.Module):
     rewardGameWin = 2
     rewardGameDraw = 1.25
     penaltyLoss = .25
-    penaltyIllegalMove = 0
+    penaltyIllegalMove = .01
     MAX_TRIES_TO_MOVE = 300
 
     def __init__(self, squareType, m, n, k):

@@ -15,6 +15,12 @@ class MNKGame(object):
         gameOver = False
         winner = None
 
+        # first see if we CAN put anymore pieces on the board
+        if not board.movesRemain():
+            gameOver = True
+            return gameOver, winner, None, None, True
+
+
         # request a move from the agent, then try to make it
         moveX, moveY = moving.move(board, settings)
         moveWasLegal = board.addPiece(moveX, moveY, moving.type)
