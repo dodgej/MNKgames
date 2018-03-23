@@ -30,6 +30,8 @@ def playGames(settings):
     draws = 0.0
 
     print("****Testing ", settings.numGamesToTest, " games of agents looking for sequences of length k=", settings.k, " using ", settings.numGamesToEstimateValue, " games to estimate value")
+    print("Agents: X: ", settings.Xagent)
+    print(" and O: ", settings.Oagent)
 
     for i in range(settings.numGamesToTest):
         # new game, create a fresh board
@@ -72,7 +74,8 @@ def trainAndTestCNNAgent(settings):
     trainingSessions = 100
     print("****Testing ", settings.numGamesToTest, " games of agents looking for sequences of length k=", settings.k,
           " using ", settings.numGamesToEstimateValue, " games to estimate value")
-
+    print("Agents: X: ", ourHero)
+    print(" and O: ", trainingPartner)
     for i in range(trainingSessions):
         for j in range(settings.numGamesToTest):
             # new game, create a fresh board

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from random import randint
+from copy import deepcopy
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -21,7 +22,6 @@ class cnnAgent(Agent, torch.nn.Module):
     penaltyIllegalMove = -10000
 
     def __init__(self, squareType, m, n, k):
-        print("Initializing network...")
         Agent.__init__(self, squareType, m, n, k)
         torch.nn.Module.__init__(self)
 
@@ -38,8 +38,6 @@ class cnnAgent(Agent, torch.nn.Module):
         self.critic = nn.Linear(boardSize, 1)
         self.actor = nn.Linear(boardSize, boardSize)
 
-        print("Initialed network")
-
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
@@ -49,7 +47,6 @@ class cnnAgent(Agent, torch.nn.Module):
         return self.critic(x), self.actor(x)
 
     def observeReward(self, history, result, settings):
-        print("Observing reward...")
         Agent.observeReward(self, history, result, settings)
 
         reward = 0
@@ -62,31 +59,41 @@ class cnnAgent(Agent, torch.nn.Module):
         if result == GameResult.ILLEGAL_MOVE:
             reward = self.penaltyIllegalMove
 
-        print("making optimizer... ")
         optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.8)
 
         _, boards = zip(*history)
 
         for board in boards:
-            # FIXME may want to do this operation elsewhere
-            optimizer.zero_grad()
-
+            # Compute the NN outputs and move
             nnValue, nnOutput = self(Variable(board.exportToNN()))
             #print("nnoutput", nnOutput)
-            #FIXME the making of the loss object is currently the main thing I am not sure on. This should not be seg faulting...
-            print("generating loss  (occasionally seg faults here)")
-            loss = nn.CrossEntropyLoss(reduce=False)(nnOutput, Variable(torch.LongTensor(-reward)))
-            print("loss generated")
+            actionProbs = F.softmax(nnOutput)
 
+
+
+
+            #FIXME this block is shared with move(). should be abstracted for clarity and maintenance.
+            mostProbableAction = actionProbs.max(1)
+            # apparently the variable above is a pair, so second element is the argmax
+            mostProbableActionIdx = mostProbableAction[1]
+            # this is in a variable, so reach in for the tensor and access an item to get an int
+            actionChoice = mostProbableActionIdx.data[0]
+
+
+
+            print(nnOutput)
+
+            targetTensor = deepcopy(nnOutput.data)
+            targetTensor[0][actionChoice] += reward
+            targetVar = Variable(targetTensor)
+
+            loss = nn.SmoothL1Loss()(nnOutput, targetVar)
+
+            optimizer.zero_grad()
             loss.backward()
-            print("BACKWARD pass complete")
             optimizer.step()
-            print("Optimizer step taken")
-
-        print("reward Observed")
 
     def move(self, board, settings):
-        print("moving...")
         '''
         for k, v in self.state_dict().items():
             print("Layer {}".format(k))
@@ -111,16 +118,13 @@ class cnnAgent(Agent, torch.nn.Module):
         #print("move", moveX, " ", moveY)
 
         if not board.moveIsLegal(moveX, moveY):
-            print("illegal move selected, trying again")
+            print("****************illegal move selected (", moveX, ",", moveY, ") or [", actionChoice, "]trying again")
 
-            #FIXME option 1, send a STRONG error signal through the network
+            #FIXME option 1 (the one we are taking right now), send a STRONG error signal through the network
+            # FIXME option 2: select the next most probable from the actions?
             fakeHistory = [((moveX, moveY), board)]
             self.observeReward(fakeHistory, GameResult.ILLEGAL_MOVE, settings)
             #FIXME careful here, dont want infinite recursion
             return self.move(board, settings)
 
-
-            #FIXME option 2: select the next most probable from the actions?
-
-        print("moved")
         return moveX, moveY
