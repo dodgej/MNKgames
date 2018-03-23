@@ -19,7 +19,8 @@ class cnnAgent(Agent, torch.nn.Module):
     rewardGameWin = 2
     rewardGameDraw = 1
     penaltyLoss = -1
-    penaltyIllegalMove = -10000
+    penaltyIllegalMove = -10
+    MAX_TRIES_TO_MOVE = 10
 
     def __init__(self, squareType, m, n, k):
         Agent.__init__(self, squareType, m, n, k)
@@ -49,6 +50,7 @@ class cnnAgent(Agent, torch.nn.Module):
     def observeReward(self, history, result, settings):
         Agent.observeReward(self, history, result, settings)
 
+        learningRate = 0.01
         reward = 0
         if result == GameResult.GAME_WIN:
             reward = self.rewardGameWin
@@ -58,8 +60,10 @@ class cnnAgent(Agent, torch.nn.Module):
             reward = self.penaltyLoss
         if result == GameResult.ILLEGAL_MOVE:
             reward = self.penaltyIllegalMove
+            learningRate = 1
 
-        optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.8)
+        optimizer = optim.SGD(self.parameters(), lr=learningRate)
+
 
         _, boards = zip(*history)
 
@@ -81,7 +85,7 @@ class cnnAgent(Agent, torch.nn.Module):
 
 
 
-            print(nnOutput)
+            #print(nnOutput)
 
             targetTensor = deepcopy(nnOutput.data)
             targetTensor[0][actionChoice] += reward
@@ -93,7 +97,7 @@ class cnnAgent(Agent, torch.nn.Module):
             loss.backward()
             optimizer.step()
 
-    def move(self, board, settings):
+    def move(self, board, settings, tries=0):
         '''
         for k, v in self.state_dict().items():
             print("Layer {}".format(k))
@@ -117,14 +121,15 @@ class cnnAgent(Agent, torch.nn.Module):
         moveX, moveY = board.convertActionVecToIdxPair(actionChoice)
         #print("move", moveX, " ", moveY)
 
-        if not board.moveIsLegal(moveX, moveY):
+        if not board.moveIsLegal(moveX, moveY) and tries < self.MAX_TRIES_TO_MOVE:
             print("****************illegal move selected (", moveX, ",", moveY, ") or [", actionChoice, "]trying again")
+            print(nnOutput)
+
 
             #FIXME option 1 (the one we are taking right now), send a STRONG error signal through the network
             # FIXME option 2: select the next most probable from the actions?
             fakeHistory = [((moveX, moveY), board)]
             self.observeReward(fakeHistory, GameResult.ILLEGAL_MOVE, settings)
-            #FIXME careful here, dont want infinite recursion
-            return self.move(board, settings)
+            return self.move(board, settings, 1+tries)
 
         return moveX, moveY
