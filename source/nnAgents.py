@@ -35,6 +35,7 @@ class cnnAgent(Agent, torch.nn.Module):
         self.conv1 = nn.Conv2d(input_channels, self.conv1_outputs, self.kernelSize, padding=int(self.kernelSize/2))
         self.conv2 = nn.Conv2d(self.conv1_outputs, self.conv2_outputs, self.kernelSize, padding=int(self.kernelSize/2))
         self.fc1 = nn.Linear(self.conv2_outputs * self.m * self.n, boardSize)
+        #self.fc1_drop = nn.Dropout(p=0.3)
 
         self.critic = nn.Linear(boardSize, 1)
         self.actor = nn.Linear(boardSize, boardSize)
@@ -50,7 +51,7 @@ class cnnAgent(Agent, torch.nn.Module):
     def observeReward(self, history, result, settings):
         Agent.observeReward(self, history, result, settings)
 
-        learningRate = 0.01
+        learningRate = 1e-3
         reward = 0
         if result == GameResult.GAME_WIN:
             reward = self.rewardGameWin
@@ -61,7 +62,8 @@ class cnnAgent(Agent, torch.nn.Module):
         if result == GameResult.ILLEGAL_MOVE:
             reward = self.penaltyIllegalMove
 
-        optimizer = optim.SGD(self.parameters(), lr=learningRate)
+        #optimizer = optim.SGD(self.parameters(), lr=learningRate, momentum=0.01)
+        optimizer = optim.Adam(self.parameters(), lr=learningRate, weight_decay=1e-4)
 
 
         _, boards = zip(*history)
