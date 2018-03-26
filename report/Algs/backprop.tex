@@ -1,0 +1,16 @@
+\begin{algorithm}
+\caption{nnAgent::observeReward(history, reward)}
+\begin{algorithmic}[1]
+\STATE{Create Optimizer}
+\STATE{Split history into just boards}
+\FOR{board in history}
+\STATE{nnOutput = forwardPass(board)}
+\STATE{actionIdx = argmax(softmax(nnOutput))}
+\STATE{target = nnOutput}
+\STATE{target[actionIdx] += reward}
+\STATE{loss = SmothL1Loss()(nnOutput, target)}
+\STATE{backwardPass and update weights}
+\ENDFOR{}
+\end{algorithmic}
+
+\end{algorithm}

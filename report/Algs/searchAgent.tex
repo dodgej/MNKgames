@@ -1,0 +1,29 @@
+\begin{algorithm}
+\caption{SearchAgents::move(board)}
+\begin{algorithmic}[1]
+\STATE{estWins = []}
+\STATE{estLosses = []}
+\STATE{estDraws = []}
+\FOR{($i$,$j$) in availSquares}
+\STATE{wins = losses = draws = $0.0$}
+\FOR{games in numGamestoEstimate}
+\STATE{Create deep copy of board}
+\STATE{Add piece to ($i$,$j$) in copy}
+\STATE{Play random game from here}
+\IF{Win game}
+\STATE{wins $\leftarrow$ wins + 1}
+\ELSIF{Lose game}
+\STATE{losses $\leftarrow$ losses + 1}
+\ELSE{}
+\STATE{draws $\leftarrow$ draws + 1}
+\ENDIF{}
+\ENDFOR{}
+\STATE{Append wins to estWins}
+\STATE{Append losses to estLosses}
+\STATE{Append draws to estDraws}
+\ENDFOR{}
+\STATE{MoveScores = $2 \times wins - losses + draws$ }
+\RETURN{availSquares( argmax( moveScores ) )}
+\end{algorithmic}
+
+\end{algorithm}

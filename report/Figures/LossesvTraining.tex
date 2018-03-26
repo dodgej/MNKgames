@@ -1,0 +1,10 @@
+\begin{figure}[b]
+	\centering
+	\includegraphics[ width = \columnwidth ]{Assets/pic_png-2}
+	\caption{Loss count vs training sessions.
+    Note that loss count drops initially, then rises again.
+    Particularly, note how sharply the loss count rises as the training session approaches 28.
+    We found that with these training sessions, win rate (and illegal moves) really went haywire around training session 28, which indicates noise in the gradient.
+   	As described earlier, minibatch-based training is likely the best remedy for this behavior.}
+	\label{fig:LossesvTraining}
+\end{figure}

@@ -1,0 +1,22 @@
+\section{Background}
+
+Work in the $M$-$N$-$K$ domain for neural networks seems to be limited to the applications of tic-tac-toe, which is an example of a 3,3,3 game in $M$-$N$-$K$.
+As early as 1993, evolutionary programming was utilized to create neural networks capable of playing tic-tac-toe~\cite{fogel1993using}.
+Their work formed showed that when the domain was small, evolutionary programming was able to adjust architecture and connections of the single hidden layer perceptrons to adapt behavior when provided a given goal.
+
+Grim et al.~\cite{grim2005probabilistic} performed their work also in a variant of tic-tac-toe, and they used probabilistic neural networks (PNN) to estimate distribution mixtures from training data through the Expectation-Maximization (EM) algorithm.
+They varied the tic-tac-toe game by allowing the network to play on a $7 \times 7$ board, which means that the penalty of a wrong move is not so harsh as it is on a $3 \times 3$ board.
+Their PNN approximates the class-conditional probability distributions by finite mixtures to use Bayesian decision-making.
+Their training data was the use of a simple heuristic player as a teacher, generating the training data by ``observing'' the self-play of the heuristic player repeatedly.
+Our work diverges from this by allowing the agents to learn by playing each other repeatedly, rather than having imitation learning.
+Ultimately, Grim et al.~\cite{grim2005probabilistic} showed that a sequentially trained PNN was capable of learning complex decision-making in a 7,7,3 game.
+Their work forms a good basis to model our human interpretable issue with, since they visualized the probabilities that the model was computing in grayscale, where the lighter the color indicated the less likely a move was to create a victory.
+
+Probably the most similar work to our own is Greydanus et al.~\cite{greydanus}, where RL is applied to the Atari domain.
+The major difference from our work is that the domains are different, with a much larger action space in our domain, since Atari only has 8 directions + button pressed (or not) amounting to 16 actions for all states in all games.
+The $M$-$N$-$K$ game domain has a much larger action space, and we are not working from pixels on the game screen.
+Nonetheless, the code hosted on Greydanus et al.'s github repo was helpful in producing our results
+
+Our approach differs from the existing methods because we apply the CNN architecture.
+Additionally, we are applying reinforcement learning techniques in order to allow for the agent to have the potential to succeed with boards beyond $3 \times 3$ where the state space can be enumerated and correct actions specified for each state.
+Thus, the tic-tac-toe case corresponds to a case of \emph{imitation learning}, which we want to expand beyond.

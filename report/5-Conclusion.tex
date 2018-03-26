@@ -1,0 +1,16 @@
+\section{Conclusion and Future Work}
+
+In this paper, we have presented our approach to building convolutional neural network-based agents to play $M$-$N$-$K$ games.
+We used reinforcement learning to train our agents, and reported some preliminary results on their performance vs some baseline agents.
+
+For future work, we would like to implement an LSTM architecture for an agent.
+This would give us a look at the impact of memory on the performance of the agent.
+We would also like to optimize the architecture of the CNN-Agent -- in particular, we are curious to know if matching the kernel sizes to $K$ has benefits in performance, network size, training time, and human understandability.
+
+We also want to learn what it means for a network to be understandable to humans.
+This platform can be used to compute and present saliency maps for selected moves.
+Testing these types of visualizations with human participants to see if they can pick the strongest agent would be very interesting.
+Another type of explanation we would like to work towards is one relative to training data. 
+Namely, when a CNN generates an output, it does so in the context of all the other inputs it has ever seen.
+Thus, when a behavior is avoided by the network, it has encoded a great deal of painful experience into the configuration of the network.
+Revealing the reason for this configuration to the human will likely require references relative to previously observed states.

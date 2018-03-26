@@ -1,0 +1,29 @@
+\section{Experiment Design and Results}
+
+\subsection{Experiment Design}
+
+Since our project was focused on the NN-based agents, we set up our experiments to test its performance as we trained it in the following way.
+The \texttt{nnAgent} being tested, call it \texttt{ourHero}, will train against a \texttt{SearchAgent} as a sparring partner for a specified number of games.
+Then, we perform a test, which corresponds to \texttt{ourHero} facing each opponent in a gauntlet in a specified number of games, with output reported.
+(Note that we do not halt weight updates during testing, so we have a slight distinction from the traditional train/test separation).
+As this process is repeated for a large number of testing sessions, we report win/loss/draw count, \# of illegal moves, maximum game length (in moves) and average game length (also in moves).
+Note that since we executed all this code on CPUs, not GPUs, our network is not very deep since we could not devote a great deal of compute to training.
+Similarly, the \texttt{SearchAgent} does very few rollouts -- merely 5 (as we achieve better performance we can add agents which perform more accurate value estimation to the gauntlet).
+
+
+\subsection{Results}
+We wanted to sample from the amount of time that the agent had had to train before going into the gauntlet.
+We hypothesized that the more time that the agent had had to train before entering, the better that it would perform against the opposing agents.
+However, we were surprised to learn that the agent performed \emph{decreasingly} better as the amount of training games increased.
+\input{Tables/initialResults}
+%\input{Figures/50Results}
+\input{Figures/100Results}
+\input{Figures/150Results}
+\input{Figures/200Results}
+\input{Figures/IllegalMoveVTrainingSession}
+\input{Figures/LossesvTraining}
+\input{Figures/WinsvTraining}
+
+
+
+

@@ -1,0 +1,38 @@
+\newcounter{boldifyCounter}
+\newcounter{fixmeSectionCounter}
+\newcounter{fixmeTotalCounter}
+
+%%%%%%%%%%%%% Drafting commands %%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\boldify}[1]{%
+\stepcounter{boldifyCounter}%
+\textbf{{\color{green}**}%
+~\arabic{section}.\arabic{subsection}.\arabic{boldifyCounter}%
+: #1}}
+
+\newcommand{\FIXME}[1]{%
+\stepcounter{fixmeSectionCounter}\stepcounter{fixmeTotalCounter}%
+{\color{red}
+\fbox{\color{black}%
+\parbox{\linewidth}{%
+\textbf{FIXME \arabic{section}.\arabic{subsection}.\arabic{fixmeSectionCounter} (\color{red}\#\arabic{fixmeTotalCounter}):} #1}}
+}
+}
+
+\newcommand{\FIXED}[2]{%
+{\color{blue}
+\fbox{%
+\parbox{\linewidth}{%
+\textbf{FIXED \##1:} \color{black}#2}}
+}
+}
+
+
+\addtocounter{fixmeSectionCounter}{-2}
+\addtocounter{fixmeTotalCounter}{-2}
+\makeatletter
+\@addtoreset{fixmeSectionCounter}{section}
+\@addtoreset{fixmeSectionCounter}{subsection}
+\@addtoreset{boldifyCounter}{section}
+\@addtoreset{boldifyCounter}{subsection}
+\makeatother

@@ -1,0 +1,12 @@
+\begin{algorithm}
+\caption{nnAgent(squareType, m, n, k)}
+\begin{algorithmic}[1]
+\STATE{nn.Conv2d(chans, c1Outs, kern, pad=int(kern/2))}
+\STATE{nn.Conv2d(c1Outs, c2Outs, kern, pad=int(kern/2))}
+\STATE{nn.Linear(c2Outs * m * n, m * n)}
+
+\STATE{actor = nn.Linear(m * n, m * n)}
+\STATE{critic = nn.Linear(m * n, 1)}
+\end{algorithmic}
+
+\end{algorithm}

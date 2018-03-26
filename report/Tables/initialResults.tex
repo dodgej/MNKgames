@@ -1,0 +1,17 @@
+\begin{table}
+\begin{tabular}{@{}p{.18\columnwidth}|p{.4\columnwidth}|p{.33\columnwidth}}
+\hline
+Training Games & Random Agent (Win\%) & Bad Search(Win\%)\\
+\hline
+50 & 83 & 13 \\
+\hline
+100 & 74 & 15\\
+\hline
+150 & 75 & 13\\
+\hline
+200 & 69 & 16\\
+\end{tabular}
+\vspace{2pt}
+\caption{ Using the Adam optimizer, we used a learning rate of 1e-3 and a weight decay of 1e-4 to obtain these results. The total number of games tested was 100, so the percentages (the right two columns) were computed by $(numWins/numGames)\times 100$ }
+\label{tab:results}
+\end{table}
